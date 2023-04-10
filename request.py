@@ -23,9 +23,9 @@ def launchBrowser():
         By.XPATH, '//*[@id="loginForm"]/div/div[3]')
     login_click.click()
 
-    time.sleep(3)
-    chrome.get("https://www.instagram.com/nba/")
     time.sleep(5)
+    chrome.get("https://www.instagram.com/nba/")
+    time.sleep(7)
     data = []
 
     actions = ActionChains(chrome)
@@ -36,17 +36,16 @@ def launchBrowser():
         actions.move_to_element(post[i]).perform()
         time.sleep(3)
         likesAndComments = chrome.find_elements(
-            By.XPATH, '//div[@class="_aacl _aacp _adda _aad3 _aad6 _aade"]/span')
+            By.XPATH, '//li[@class="_abpm"]/span/span')
         likes = likesAndComments[0].text
         likes = likes.encode("utf8").decode("cp950", "ignore")
         comments = likesAndComments[1].text
         comments = comments.encode("utf8").decode("cp950", "ignore")
 
-        dic = {'href': href, 'likes': likes, 'comments': comments}
+        dic = {'href': href, 'likes': likes, 'commentsNum': comments}
         data.append(dic)
         if (len(data) >= 5):
             break
-    print(data)
     commentList = []
     for k in range(5):
 
@@ -67,18 +66,42 @@ def launchBrowser():
                 By.XPATH, '//span[@class="_aacl _aaco _aacu _aacx _aad7 _aade"]')[i].text
             commentList.append(conment.encode(
                 "utf8").decode("cp950", "ignore"))
-    data[k]['conment'] = commentList
-    print('---------------')
+        data[k]['comments'] = commentList
+        commentList = []
 
-    print(data)
-
-    while (True):
-        pass
+    export(data)
 
 
-def export(self, stocks):
-    wb = openpyxl.Workbook()
-    sheet = wb.create_sheet("內文", "日期", "按讚數", "回覆數", "回覆內容",)
+
+
+def export(data):
+    wb = openpyxl.Workbook()    # 建立空白的 Excel 活頁簿物件
+    wb.save('crawler_excel.xlsx') 
+
+    wb = openpyxl.load_workbook('crawler_excel.xlsx', data_only=True) 
+
+    s1 = wb['Sheet']
+
+    format =[['','貼文連結','讚數(萬)','留言數','發文時間','文章標題','留言'],['1','','','','','',''],['2','','','','','',''],['3','','','','','',''],['4','','','','','',''],['5','','','','','','']]
+    for i in format:
+        s1.append(i)
+
+    data2 = data
+
+    for y in range(len(data2)):
+        row = 2 + y
+        s1.cell(row,1).value = data2[y]['href']
+        s1.cell(row,2).value = data2[y]['likes']
+        s1.cell(row,3).value = data2[y]['commentsNum']
+        s1.cell(row,4).value = data2[y]['time']
+        s1.cell(row,5).value = data2[y]['content'].encode(
+                "utf8").decode("cp950", "ignore")
+        commentlen = len(data2[y]['comments'])
+        for j in range(commentlen):
+            col = 5+j
+            s1.cell(row,col).value = data2[y]['comments'][j].encode(
+                    "utf8").decode("cp950", "ignore")
+    wb.save('crawler_excel.xlsx')
 
 
 switch = True
